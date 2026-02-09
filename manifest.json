@@ -1,11 +1,12 @@
 {
   "name": "Image to Layers",
-  "id": "image-to-layers-plugin",
+  "id": "1602698918303745704",
   "api": "1.0.0",
   "main": "dist/main.js",
   "ui": "dist/ui.html",
   "capabilities": [],
   "enableProposedApi": false,
+  "documentAccess": "dynamic-page",
   "editorType": ["figma"],
   "networkAccess": {
     "allowedDomains": ["none"]
