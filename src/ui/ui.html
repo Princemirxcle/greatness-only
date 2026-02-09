@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Image to Layers</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px;
+      color: #333;
+      background: #fff;
+      padding: 16px;
+      min-height: 100vh;
+    }
+
+    h2 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+
+    .drop-zone {
+      border: 2px dashed #c4c4c4;
+      border-radius: 8px;
+      padding: 32px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #fafafa;
+      margin-bottom: 16px;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: #18a0fb;
+      background: #f0f8ff;
+    }
+
+    .drop-zone-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      color: #999;
+    }
+
+    .drop-zone-text {
+      color: #666;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .drop-zone-text strong {
+      color: #18a0fb;
+    }
+
+    .preview-container {
+      display: none;
+      margin-bottom: 16px;
+    }
+
+    .preview-container.visible {
+      display: block;
+    }
+
+    .preview-image {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      border-radius: 6px;
+      border: 1px solid #e5e5e5;
+      background: #f5f5f5;
+    }
+
+    .image-info {
+      font-size: 11px;
+      color: #888;
+      margin-top: 6px;
+    }
+
+    .section {
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .option-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .option-label {
+      font-size: 12px;
+      color: #333;
+    }
+
+    select, input[type="number"] {
+      padding: 6px 8px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      font-size: 11px;
+      background: #fff;
+      color: #333;
+      outline: none;
+    }
+
+    select:focus, input[type="number"]:focus {
+      border-color: #18a0fb;
+    }
+
+    input[type="range"] {
+      width: 120px;
+      accent-color: #18a0fb;
+    }
+
+    .range-value {
+      font-size: 11px;
+      color: #666;
+      min-width: 30px;
+      text-align: right;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      accent-color: #18a0fb;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: #18a0fb;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #0d8de5;
+    }
+
+    .btn-primary:disabled {
+      background: #c4c4c4;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .progress-container {
+      display: none;
+      margin-bottom: 16px;
+    }
+
+    .progress-container.visible {
+      display: block;
+    }
+
+    .progress-bar-bg {
+      background: #e5e5e5;
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #18a0fb;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .progress-text {
+      font-size: 11px;
+      color: #888;
+    }
+
+    .status-message {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+
+    .status-message.visible {
+      display: block;
+    }
+
+    .status-message.success {
+      background: #e6f9e6;
+      color: #1a7a1a;
+      border: 1px solid #b3e6b3;
+    }
+
+    .status-message.error {
+      background: #ffe6e6;
+      color: #cc3333;
+      border: 1px solid #ffb3b3;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <h2>Image to Layers</h2>
+
+  <!-- Drop zone -->
+  <div id="dropZone" class="drop-zone">
+    <div class="drop-zone-icon">&#128444;</div>
+    <div class="drop-zone-text">
+      <strong>Click to upload</strong> or drag & drop<br>
+      PNG, JPG, or SVG
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+  </div>
+
+  <!-- Image preview -->
+  <div id="previewContainer" class="preview-container">
+    <img id="previewImage" class="preview-image" alt="Preview">
+    <div id="imageInfo" class="image-info"></div>
+  </div>
+
+  <!-- Conversion settings -->
+  <div class="section">
+    <div class="section-title">Conversion Settings</div>
+
+    <div class="option-row">
+      <span class="option-label">Mode</span>
+      <select id="conversionMode">
+        <option value="auto">Auto Detect</option>
+        <option value="ui">UI Components</option>
+        <option value="shapes">Shapes & Icons</option>
+        <option value="detailed">Detailed (More Layers)</option>
+      </select>
+    </div>
+
+    <div class="option-row">
+      <span class="option-label">Color Tolerance</span>
+      <input type="range" id="colorTolerance" min="5" max="80" value="30">
+      <span id="colorToleranceValue" class="range-value">30</span>
+    </div>
+
+    <div class="option-row">
+      <span class="option-label">Min Region Size (px)</span>
+      <input type="number" id="minRegionSize" min="4" max="200" value="20" style="width:60px">
+    </div>
+
+    <div class="option-row">
+      <span class="option-label">Max Layers</span>
+      <input type="number" id="maxLayers" min="5" max="500" value="100" style="width:60px">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Options</div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="detectText" checked>
+      <label for="detectText">Detect text regions</label>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="detectButtons" checked>
+      <label for="detectButtons">Detect buttons & inputs</label>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="roundCorners" checked>
+      <label for="roundCorners">Detect rounded corners</label>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="groupLayers" checked>
+      <label for="groupLayers">Auto-group related layers</label>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="keepOriginal">
+      <label for="keepOriginal">Keep original image as background</label>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Progress -->
+  <div id="progressContainer" class="progress-container">
+    <div class="progress-bar-bg">
+      <div id="progressBarFill" class="progress-bar-fill"></div>
+    </div>
+    <div id="progressText" class="progress-text">Analyzing image...</div>
+  </div>
+
+  <!-- Status -->
+  <div id="statusMessage" class="status-message"></div>
+
+  <!-- Actions -->
+  <button id="convertBtn" class="btn btn-primary" disabled>Convert to Layers</button>
+  <button id="clearBtn" class="btn btn-secondary" style="display:none">Clear & Start Over</button>
+
+  <script>
+    // State
+    let imageData = null;
+    let imageWidth = 0;
+    let imageHeight = 0;
+
+    // Elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImage = document.getElementById('previewImage');
+    const imageInfo = document.getElementById('imageInfo');
+    const convertBtn = document.getElementById('convertBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const progressText = document.getElementById('progressText');
+    const statusMessage = document.getElementById('statusMessage');
+    const colorTolerance = document.getElementById('colorTolerance');
+    const colorToleranceValue = document.getElementById('colorToleranceValue');
+
+    // Slider value display
+    colorTolerance.addEventListener('input', () => {
+      colorToleranceValue.textContent = colorTolerance.value;
+    });
+
+    // File handling
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        handleFile(file);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          imageWidth = img.width;
+          imageHeight = img.height;
+
+          // Draw to canvas to get pixel data
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          imageData = ctx.getImageData(0, 0, img.width, img.height);
+
+          // Show preview
+          previewImage.src = e.target.result;
+          previewContainer.classList.add('visible');
+          imageInfo.textContent = `${img.width} x ${img.height} px — ${(file.size / 1024).toFixed(1)} KB`;
+          dropZone.style.display = 'none';
+          convertBtn.disabled = false;
+          clearBtn.style.display = 'block';
+
+          showStatus('', '');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Clear
+    clearBtn.addEventListener('click', () => {
+      imageData = null;
+      previewContainer.classList.remove('visible');
+      dropZone.style.display = '';
+      convertBtn.disabled = true;
+      clearBtn.style.display = 'none';
+      fileInput.value = '';
+      progressContainer.classList.remove('visible');
+      showStatus('', '');
+    });
+
+    // Convert
+    convertBtn.addEventListener('click', () => {
+      if (!imageData) return;
+
+      const settings = {
+        mode: document.getElementById('conversionMode').value,
+        colorTolerance: parseInt(colorTolerance.value),
+        minRegionSize: parseInt(document.getElementById('minRegionSize').value),
+        maxLayers: parseInt(document.getElementById('maxLayers').value),
+        detectText: document.getElementById('detectText').checked,
+        detectButtons: document.getElementById('detectButtons').checked,
+        roundCorners: document.getElementById('roundCorners').checked,
+        groupLayers: document.getElementById('groupLayers').checked,
+        keepOriginal: document.getElementById('keepOriginal').checked,
+      };
+
+      convertBtn.disabled = true;
+      progressContainer.classList.add('visible');
+      updateProgress(0, 'Starting analysis...');
+
+      // Send image data and settings to the plugin controller
+      parent.postMessage({
+        pluginMessage: {
+          type: 'convert-image',
+          imageData: Array.from(imageData.data),
+          width: imageWidth,
+          height: imageHeight,
+          settings: settings
+        }
+      }, '*');
+    });
+
+    // Listen for messages from plugin controller
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      switch (msg.type) {
+        case 'progress':
+          updateProgress(msg.percent, msg.text);
+          break;
+        case 'complete':
+          updateProgress(100, 'Done!');
+          showStatus(`Created ${msg.layerCount} editable layers`, 'success');
+          convertBtn.disabled = false;
+          setTimeout(() => progressContainer.classList.remove('visible'), 1500);
+          break;
+        case 'error':
+          showStatus(msg.message, 'error');
+          convertBtn.disabled = false;
+          progressContainer.classList.remove('visible');
+          break;
+      }
+    };
+
+    function updateProgress(percent, text) {
+      progressBarFill.style.width = percent + '%';
+      progressText.textContent = text;
+    }
+
+    function showStatus(text, type) {
+      if (!text) {
+        statusMessage.classList.remove('visible');
+        return;
+      }
+      statusMessage.textContent = text;
+      statusMessage.className = 'status-message visible ' + type;
+    }
+  </script>
+</body>
+</html>
